@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Ayurvedic Medicine Tracker</title>
+<style>
+:root {
+--bg: #f2f2f7;
+--card: #ffffff;
+--primary: #34c759;
+--accent: #007aff;
+--text: #1c1c1e;
+--radius: 16px;
+--shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+* {
+box-sizing: border-box;
+}
+
+body {
+margin: 0;
+font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+background-color: var(--bg);
+color: var(--text);
+padding: 1rem;
+}
+
+header {
+text-align: center;
+margin-bottom: 1rem;
+}
+
+header h1 {
+font-size: 1.8rem;
+margin-bottom: 0.3rem;
+}
+
+.controls {
+display: flex;
+justify-content: center;
+gap: 0.5rem;
+margin-bottom: 1rem;
+flex-wrap: wrap;
+}
+
+select {
+padding: 0.5rem;
+border-radius: var(--radius);
+border: 1px solid #ccc;
+font-size: 1rem;
+}
+
+.calendar {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+gap: 1rem;
+}
+
+.day-card {
+background-color: var(--card);
+border-radius: var(--radius);
+box-shadow: var(--shadow);
+padding: 1rem;
+border: 1px solid #eaeaea;
+}
+
+.day-header {
+text-align: center;
+font-weight: 600;
+color: var(--primary);
+margin-bottom: 0.3rem;
+}
+
+.day-date {
+text-align: center;
+font-size: 0.9rem;
+color: #555;
+margin-bottom: 0.5rem;
+}
+
+.med-list label {
+display: flex;
+align-items: center;
+font-size: 0.95rem;
+margin-bottom: 0.3rem;
+}
+
+.med-list input[type="checkbox"] {
+margin-right: 0.6rem;
+transform: scale(1.2);
+accent-color: var(--primary);
+}
+
+.today-box {
+margin-bottom: 2rem;
+background-color: var(--card);
+border-radius: var(--radius);
+box-shadow: var(--shadow);
+padding: 1rem;
+border-left: 5px solid var(--accent);
+}
+
+footer {
+text-align: center;
+margin-top: 2rem;
+font-size: 0.9rem;
+color: #888;
+}
+
+@media (max-width: 500px) {
+header h1 {
+font-size: 1.4rem;
+}
+
+select {
+font-size: 0.9rem;
+}
+}
+</style>
+</head>
+<body>
+<header>
+<h1>🌿 Ayurvedic Medicine Tracker</h1>
+<div class="controls">
+<select id="monthSelect"></select>
+<select id="yearSelect"></select>
+</div>
+</header>
+
+<!-- 🔝 Current Date Checklist -->
+<div id="todayChecklist" class="today-box"></div>
+
+<!-- 📅 Calendar Grid -->
+<div class="calendar" id="calendarGrid"></div>
+
+<footer>
+🌱 Designed for Hardik — Healing through balance
+</footer>
+
+<script>
+const medicinePlan = {
+Sunday: [
+"🔥 Trikatu — 7:00 AM",
+"🍽️ Tentex Royal — 8:30 AM",
+"🧬 Speman — 8:30 AM",
+"🧘 Ashwagandha — 8:30 AM",
+"🌙 Confido — 9:00 PM",
+"😴 Ashwagandha — 9:00 PM"
+],
+Monday: [
+"🕖 Shilajit — 7:00 AM",
+"🔥 Trikatu — 7:00 AM",
+"🧬 Speman — 8:30 AM",
+"🧘 Ashwagandha — 8:30 AM",
+"🌙 Confido — 9:00 PM",
+"😴 Ashwagandha — 9:00 PM"
+],
+Tuesday: [
+"🔥 Trikatu — 7:00 AM",
+"🍽️ Tentex Royal — 8:30 AM",
+"🧬 Speman — 8:30 AM",
+"🧘 Ashwagandha — 8:30 AM",
+"🌙 Confido — 9:00 PM",
+"😴 Ashwagandha — 9:00 PM"
+],
+Wednesday: [
+"🕖 Shilajit — 7:00 AM",
+"🔥 Trikatu — 7:00 AM",
+"🧬 Speman — 8:30 AM",
+"🧘 Ashwagandha — 8:30 AM",
+"🌙 Confido — 9:00 PM",
+"😴 Ashwagandha — 9:00 PM"
+],
+Thursday: [
+"🔥 Trikatu — 7:00 AM",
+"🍽️ Tentex Royal — 8:30 AM",
+"🧬 Speman — 8:30 AM",
+"🧘 Ashwagandha — 8:30 AM",
+"🌙 Confido — 9:00 PM",
+"😴 Ashwagandha — 9:00 PM"
+],
+Friday: [
+"🕖 Shilajit — 7:00 AM",
+"🔥 Trikatu — 7:00 AM",
+"🧬 Speman — 8:30 AM",
+"🧘 Ashwagandha — 8:30 AM",
+"🌙 Confido — 9:00 PM",
+"😴 Ashwagandha — 9:00 PM"
+],
+Saturday: [
+"🔥 Trikatu — 7:00 AM",
+"🍽️ Tentex Royal — 8:30 AM",
+"🧬 Speman — 8:30 AM",
+"🧘 Ashwagandha — 8:30 AM",
+"🌙 Confido — 9:00 PM",
+"😴 Ashwagandha — 9:00 PM"
+]
+};
+
+const currentDate = new Date();
+const currentYear = currentDate.getFullYear();
+const currentMonth = currentDate.getMonth();
+
+const monthNames = [...Array(12).keys()].map(i =>
+new Date(0, i).toLocaleString('default', { month: 'long' })
+);
+
+const todayChecklistDiv = document.getElementById("todayChecklist");
+const monthSelect = document.getElementById("monthSelect");
+const yearSelect = document.getElementById("yearSelect");
+const calendarGrid = document.getElementById("calendarGrid");
+
+function populateSelectors() {
+for (let y = currentYear - 2; y <= currentYear + 5; y++) {
+const option = document.createElement("option");
+option.value = y;
+option.textContent = y;
+yearSelect.appendChild(option);
+}
+
+monthNames.forEach((m, i) => {
+const option = document.createElement("option");
+option.value = i;
+option.textContent = m;
+monthSelect.appendChild(option);
+});
+
+yearSelect.value = currentYear;
+monthSelect.value = currentMonth;
+}
+
+function renderChecklistForDate(date, container, highlight = false) {
+const dayName = date.toLocaleDateString(undefined, { weekday: "long" });
+const isoDate = date.toISOString().split("T")[0];
+const meds = medicinePlan[dayName] || [];
+
+const card = document.createElement("div");
+card.className = highlight ? "day-card" : "";
+
+const header = document.createElement("div");
+header.className = "day-header";
+header.textContent = highlight ? "🔔 Today's Checklist" : dayName;
+card.appendChild(header);
+
+const dateLabel = document.createElement("div");
+dateLabel.className = "day-date";
+dateLabel.textContent = date.toDateString();
+card.appendChild(dateLabel);
+
+const list = document.createElement("div");
+list.className = "med-list";
+
+const saved = JSON.parse(localStorage.getItem(`meds-${isoDate}`)) || [];
+
+meds.forEach((med, i) => {
+const label = document.createElement("label");
+const cb = document.createElement("input");
+cb.type = "checkbox";
+cb.checked = saved.includes(i);
+cb.addEventListener("change", () => {
+const checkboxes = list.querySelectorAll("input");
+const checkedIndexes = [];
+checkboxes.forEach((el, idx) => {
+if (el.checked) checkedIndexes.push(idx);
+});
+localStorage.setItem(`meds-${isoDate}`, JSON.stringify(checkedIndexes));
+});
+label.appendChild(cb);
+label.appendChild(document.createTextNode(med));
+list.appendChild(label);
+});
+
+card.appendChild(list);
+container.innerHTML = "";
+container.appendChild(card);
+}
+
+function renderCalendar(month, year) {
+calendarGrid.innerHTML = "";
+const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+for (let d = 1; d <= daysInMonth; d++) {
+const date = new Date(year, month, d);
+const dayName = date.toLocaleDateString(undefined, { weekday: "long" });
+const isoDate = date.toISOString().split("T")[0];
+const meds = medicinePlan[dayName];
+
+const card = document.createElement("div");
+card.className = "day-card";
+
+const header = document.createElement("div");
+header.className = "day-header";
+header.textContent = dayName;
+card.appendChild(header);
+
+const dateLabel = document.createElement("div");
+dateLabel.className = "day-date";
+dateLabel.textContent = date.toDateString();
+card.appendChild(dateLabel);
+
+const list = document.createElement("div");
+list.className = "med-list";
+
+const saved = JSON.parse(localStorage.getItem(`meds-${isoDate}`)) || [];
+
+meds.forEach((med, i) => {
+const label = document.createElement("label");
+const cb = document.createElement("input");
+cb.type = "checkbox";
+cb.checked = saved.includes(i);
+cb.addEventListener("change", () => {
+const checkboxes = list.querySelectorAll("input");
+const checkedIndexes = [];
+checkboxes.forEach((el, idx) => {
+if (el.checked) checkedIndexes.push(idx);
+});
+localStorage.setItem(`meds-${isoDate}`, JSON.stringify(checkedIndexes));
+});
+label.appendChild(cb);
+label.appendChild(document.createTextNode(med));
+list.appendChild(label);
+});
+
+card.appendChild(list);
+calendarGrid.appendChild(card);
+}
+}
+
+monthSelect.addEventListener("change", () => {
+renderCalendar(+monthSelect.value, +yearSelect.value);
+});
+
+yearSelect.addEventListener("change", () => {
+renderCalendar(+monthSelect.value, +yearSelect.value);
+});
+
+populateSelectors();
+renderChecklistForDate(currentDate, todayChecklistDiv, true);
+renderCalendar(currentMonth, currentYear);
+</script>
+</body>
+</html>
